@@ -22,8 +22,15 @@ namespace Role_based_Auth.Services
 
                 //Add roles
                 logger.LogInformation("Seeding roles.");
-                await AddRoleAsync(roleManager, "Admin");
-                await AddRoleAsync(roleManager, "User");
+
+                string[] roles = { "Admin", "Customer", "Employee", "User" };
+
+                foreach (var role in roles)
+                {
+                    await AddRoleAsync(roleManager, role);       
+                } 
+                //await AddRoleAsync(roleManager, "Admin");
+                //await AddRoleAsync(roleManager, "User");
 
                 //Add admin user
                 logger.LogInformation("Seeding admin user");

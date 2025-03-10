@@ -37,6 +37,18 @@ namespace Role_based_Auth.Controllers
             return View();
         }
 
+        [Authorize(Roles = "Employee")]
+        public IActionResult Employee()
+        {
+            return View();
+        }
+
+        [Authorize(Roles = "Customer")]
+        public IActionResult Customer()
+        {
+            return View();
+        }
+
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {

@@ -21,5 +21,11 @@ namespace Role_based_Auth.ViewModels
         [DataType(DataType.Password)]
         [Display(Name = "Confirm Password")]
         public string ConfirmPassword {  get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Role selection is required.")]
+        [Display(Name = "Select Role")]
+        public string Role { get; set; } = string.Empty;
+
+        public List<string> Roles { get; set; } = new List<string> { "Customer", "Employee"};
     }
 }

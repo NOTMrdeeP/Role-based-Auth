@@ -1,0 +1,10 @@
+--Customer--
+John
+john@nmu.ac.za
+John@123
+
+
+--Employee--
+Jennie
+jennie@yahoo.com
+Jennie@123

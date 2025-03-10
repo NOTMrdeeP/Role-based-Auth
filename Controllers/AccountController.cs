@@ -1,5 +1,8 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using Role_based_Auth.Models;
 using Role_based_Auth.ViewModels;
 
@@ -33,11 +36,22 @@ namespace Role_based_Auth.Controllers
                 return View(model);
             }
 
-            var result = await signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
-            if (result.Succeeded)
+            var user = await userManager.FindByEmailAsync(model.Email);
+            if (user != null)
             {
-                return RedirectToAction("Index", "Home");
+                var result = await signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, false);
+                if (result.Succeeded)
+                {
+                    var roles = await userManager.GetRolesAsync(user);
+                    if (roles.Contains("Employee"))
+                        return RedirectToAction("Employee", "Home");
+                    else if (roles.Contains("Customer"))
+                        return RedirectToAction("Customer", "Home");
+
+                    return RedirectToAction("Index", "Home");
+                }
             }
+            
 
             ModelState.AddModelError(string.Empty, "Invalid Login Attempt.");
             return View(model);
@@ -45,9 +59,18 @@ namespace Role_based_Auth.Controllers
         }
 
         [HttpGet]
-        public IActionResult Register()
+        public async Task<IActionResult> Register()
         {
-            return View();
+            var roles = await roleManager.Roles
+                  .Where(r => r.Name == "Customer" || r.Name == "Employee")
+                  .Select(r => r.Name)
+                  .ToListAsync();
+
+            var model = new RegisterViewModel
+            {
+                Roles = roles // Ensure this is NOT null
+            };
+            return View(model);
         }
 
         [HttpPost]
@@ -72,18 +95,20 @@ namespace Role_based_Auth.Controllers
 
             if (result.Succeeded)
             {
-                var roleExist = await roleManager.RoleExistsAsync("User");
-
+                //Check if role exists in database
+                var roleExist = await roleManager.RoleExistsAsync(model.Role);
                 if (!roleExist)
                 {
-                    var role = new IdentityRole("User");
-                    await roleManager.CreateAsync(role);
+                    ModelState.AddModelError("", "Selected role does not exist.");
+                    return View(model);
+
+                    //var role = new IdentityRole("User");
+                    //await roleManager.CreateAsync(role);
                 }
 
-                await userManager.AddToRoleAsync(user, "User");
+                await userManager.AddToRoleAsync(user, model.Role); //Assign user to selected role
 
                 await signInManager.SignInAsync(user, isPersistent: false);
-
                 return RedirectToAction("Login", "Account");
 
             }
@@ -94,6 +119,13 @@ namespace Role_based_Auth.Controllers
             }
 
             return View(model);
+        }
+
+        [Authorize(Roles = "Employee")]
+        [HttpGet]
+        public IActionResult EmployeeDashboard()
+        {
+            return View();
         }
 
         [HttpGet]
@@ -175,5 +207,6 @@ namespace Role_based_Auth.Controllers
             await signInManager.SignOutAsync();
             return RedirectToAction("Index", "Home");
         }
+
     }
 }
